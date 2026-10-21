@@ -56,7 +56,7 @@ functions in `backend/care.py`, so they always agree.
 Requires **Python 3.10+**. No API keys, no AWS account, no hardware.
 
 ```bash
-git clone <your-repo-url> allswell
+git clone https://github.com/Ali-2123-Lawful/allswell.git
 cd allswell
 ./run.sh                                          # macOS / Linux
 powershell -ExecutionPolicy Bypass -File run.ps1  # Windows
