@@ -45,12 +45,35 @@
     speechSynthesis.speak(u);
   }
 
+  // A "…" bubble while Allswell is answering.
+  function addTyping() {
+    const li = document.createElement("li");
+    li.className = "msg assistant typing";
+    li.setAttribute("aria-label", "Allswell is thinking");
+    const p = document.createElement("p");
+    p.append(document.createElement("i"), document.createElement("i"), document.createElement("i"));
+    li.appendChild(p);
+    log.appendChild(li);
+    li.scrollIntoView({ behavior: "smooth", block: "end" });
+    return li;
+  }
+
+  let busy = false;
+  function setBusy(on) {
+    busy = on;
+    $("form").classList.toggle("busy", on);
+    input.disabled = on;
+    document.querySelectorAll("#chips button, #form button[type=submit]").forEach((b) => { b.disabled = on; });
+  }
+
   async function ask(question) {
     question = question.trim();
-    if (!question) return;
+    if (!question || busy) return;
     addMsg("user", question);
     input.value = "";
     setState("thinking");
+    setBusy(true);
+    const typing = addTyping();
     try {
       const r = await fetch("/api/ask", {
         method: "POST",
@@ -58,11 +81,16 @@
         body: JSON.stringify({ question }),
       });
       const d = await r.json();
+      typing.remove();
       addMsg("assistant", d.reply, d);
       say(d.reply);
     } catch (e) {
+      typing.remove();
       addMsg("assistant", "Sorry, I couldn't reach Allswell just now.");
       setState("idle");
+    } finally {
+      setBusy(false);
+      input.focus();
     }
   }
 

@@ -18,56 +18,74 @@
         </div>
       </div>
       <div class="bar-right">
-        <a class="ask-link" href="/ask">Ask on Alexa+ ›</a>
-        <div class="live" id="live">checking…</div>
+        <output class="live" id="live">checking…</output>
+        <a class="ask-link" href="/ask"><span class="ask-orb" aria-hidden="true"></span>Ask on Alexa+</a>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <!-- Hero status: the whole product in one glance -->
-    <section class="status" id="statusCard">
-      <div class="status-eyebrow" id="statusEyebrow">Today</div>
-      <h1 id="statusHeadline">Checking in…</h1>
-      <p id="statusMessage" class="status-msg">Reading today's rhythm.</p>
-      <div class="status-foot">
-        <span class="src" id="digestSrc"></span>
-        <button class="checkin" id="checkinBtn" hidden>Check in on Mum</button>
-      </div>
-      <p class="checked" id="checkedNote" hidden></p>
-    </section>
+  <div class="offline" id="offline" role="alert" hidden>Can't reach Allswell right now. Retrying…</div>
 
-    <!-- Anomalies, if any -->
-    <section id="alertsSection" hidden>
-      <h2 class="sec-title">What needs a look</h2>
-      <div id="alerts" class="alerts"></div>
-    </section>
+  <main class="wrap layout" id="main">
+    <div class="col-main">
+      <!-- Hero status: the whole product in one glance -->
+      <section class="status" id="statusCard" aria-live="polite">
+        <div class="status-top">
+          <span class="status-icon" id="statusIcon" aria-hidden="true">✓</span>
+          <span class="status-eyebrow" id="statusEyebrow">Today</span>
+        </div>
+        <h1 id="statusHeadline">Checking in…</h1>
+        <p id="statusMessage" class="status-msg">Reading today's rhythm.</p>
+        <div class="status-foot">
+          <button class="checkin" id="checkinBtn" hidden>Check in on Mum</button>
+          <span class="src" id="digestSrc"></span>
+        </div>
+        <p class="checked" id="checkedNote" hidden></p>
+      </section>
 
-    <!-- Today's rhythm timeline -->
-    <section>
-      <h2 class="sec-title">Today's rhythm</h2>
-      <p class="sec-note">Events only — never a video feed. This is everything Allswell looked at.</p>
-      <ol class="timeline" id="timeline"></ol>
-    </section>
+      <!-- Anomalies, if any -->
+      <section id="alertsSection" hidden>
+        <h2 class="sec-title">What needs a look</h2>
+        <div id="alerts" class="alerts"></div>
+      </section>
 
-    <!-- Baseline + privacy -->
-    <section class="grid2">
-      <div class="panel">
+      <!-- Day-rhythm chart: usual windows vs today's events -->
+      <section class="card">
+        <h2 class="sec-title">Today vs. Mum's usual day</h2>
+        <p class="sec-note">Each row is a room. The band is when it's usually active; marks are today's events.</p>
+        <div class="legend" aria-hidden="true">
+          <span><i class="lg-band"></i>Usual window</span>
+          <span><i class="lg-dot"></i>Event today</span>
+          <span><i class="lg-flag"></i>Outside the usual rhythm</span>
+          <span><i class="lg-quiet"></i>Quiet hours</span>
+          <span><i class="lg-now"></i>Now</span>
+        </div>
+        <figure class="rhythm" id="rhythm" aria-label="Day-rhythm chart: usual activity windows per room and today's events"></figure>
+      </section>
+
+      <!-- Today's events: the table view of the chart -->
+      <section class="card">
+        <h2 class="sec-title">Today's events</h2>
+        <p class="sec-note">Events only, never a video feed. This is everything Allswell looked at.</p>
+        <ol class="timeline" id="timeline"></ol>
+      </section>
+    </div>
+
+    <aside class="col-side">
+      <section class="card demo">
+        <h2 class="sec-title">Demo scenarios</h2>
+        <p class="sec-note">Switch what "today" looks like. Scripted, so every run is identical.</p>
+        <div class="scenarios" id="scenarios"></div>
+      </section>
+      <section class="panel">
         <h3>What "normal" means</h3>
         <p class="panel-note" id="baselineNote">—</p>
-      </div>
-      <div class="panel">
+      </section>
+      <section class="panel">
         <h3>Privacy by design</h3>
         <p class="panel-note">No camera feed, no video, ever. Allswell only sees event metadata: what kind of activity, which room, and when.</p>
-      </div>
-    </section>
-
-    <!-- Demo controls -->
-    <section class="demo">
-      <h2 class="sec-title">Demo controls</h2>
-      <p class="sec-note">Switch what "today" looks like. Scripted, so the demo is identical every run.</p>
-      <div class="scenarios" id="scenarios"></div>
-    </section>
+      </section>
+    </aside>
   </main>
 
   <footer class="wrap foot">

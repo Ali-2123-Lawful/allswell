@@ -73,7 +73,19 @@ def snapshot() -> dict:
         "baseline": {
             "days_observed": baseline.days_observed,
             "zones": sorted(baseline.zones.keys()),
+            # Per-zone usual window and the quiet hours, for the day-rhythm chart.
+            "profiles": {
+                zone: {
+                    "first_minute": prof.typical_first_minute,
+                    "last_minute": prof.typical_last_minute,
+                    "days_seen": prof.days_seen,
+                }
+                for zone, prof in baseline.zones.items()
+            },
+            "quiet_start_minute": baseline.quiet_start_minute,
+            "quiet_end_minute": baseline.quiet_end_minute,
         },
+        "now_minute": now_ref.hour * 60 + now_ref.minute,
         "checked_in_at": _state["checked_in_at"],
     }
 

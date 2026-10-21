@@ -16,7 +16,7 @@
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.55; display: flex; flex-direction: column; }
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.55; display: flex; flex-direction: column; }
   .wrap { width: 100%; max-width: 40rem; margin: 0 auto; padding: 0 16px; }
 
   header { border-bottom: 1px solid var(--line); }
@@ -63,6 +63,31 @@
   .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: .82rem; color: var(--muted); }
   .controls select { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
   .controls label { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* motion + feedback */
+  .msg { animation: pop .25s ease both; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } }
+  .typing p { display: inline-flex; gap: 5px; align-items: center; height: 42px; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1s ease-in-out infinite; }
+  .typing i:nth-child(2) { animation-delay: .15s; }
+  .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  form.busy { opacity: .6; }
+  .chips button:disabled, .round:disabled { cursor: progress; }
+  .chips button, .round { transition: border-color .15s ease, transform .15s ease; }
+  .chips button:hover:not(:disabled) { transform: translateY(-1px); }
+
+  /* phones: smaller stage, one scrollable row of suggestions */
+  @media (max-width: 480px) {
+    .stage { padding-top: 16px; }
+    .orb { width: 84px; height: 84px; }
+    h1 { font-size: 1.35rem; margin-top: 12px; }
+    .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chips button { flex: none; }
+    .msg { max-width: 94%; }
+  }
+  @media (prefers-reduced-motion: reduce) { .msg, .typing i { animation: none; } }
 </style>
 </head>
 <body>
