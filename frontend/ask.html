@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Allswell on Alexa+</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* A voice-device screen: always dark, one glowing orb, the conversation below. */
+  :root {
+    --bg: #0c1214; --surface: #151d20; --surface-2: #1d272b; --fg: #e8eff0; --muted: #93a7ab;
+    --line: #26343a; --glow: #3cc8f0; --glow-soft: rgba(60, 200, 240, .18); --user: #22424d;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.55; display: flex; flex-direction: column; }
+  .wrap { width: 100%; max-width: 40rem; margin: 0 auto; padding: 0 16px; }
+
+  header { border-bottom: 1px solid var(--line); }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; padding-bottom: 14px; }
+  .bar a { color: var(--muted); text-decoration: none; font-size: .9rem; }
+  .bar a:hover { color: var(--fg); }
+  .badge { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; color: var(--glow); border: 1px solid var(--glow-soft); background: var(--glow-soft); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+
+  .stage { text-align: center; padding: 28px 0 8px; }
+  .orb { width: 108px; height: 108px; margin: 0 auto; border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, #c9f4ff 0%, var(--glow) 38%, #0d5a78 72%, #08303f 100%);
+    box-shadow: 0 0 36px var(--glow-soft), 0 0 0 1px rgba(60,200,240,.25); transition: transform .3s ease, box-shadow .3s ease; }
+  .orb[data-state="listening"] { animation: pulse 1.1s ease-in-out infinite; }
+  .orb[data-state="thinking"] { animation: breathe 1.6s ease-in-out infinite; }
+  .orb[data-state="speaking"] { animation: pulse .55s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.07); box-shadow: 0 0 64px rgba(60,200,240,.5), 0 0 0 1px rgba(60,200,240,.4); } }
+  @keyframes breathe { 50% { opacity: .65; transform: scale(.96); } }
+  @media (prefers-reduced-motion: reduce) { .orb { animation: none !important; } }
+  h1 { font-family: var(--font-display); font-weight: 600; font-size: 1.6rem; margin: 18px 0 2px; }
+  .status { color: var(--muted); font-size: .92rem; margin: 0; min-height: 1.4em; }
+
+  main { flex: 1; }
+  .log { list-style: none; margin: 20px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 88%; }
+  .msg p { margin: 0; padding: 10px 14px; border-radius: 16px; }
+  .msg.user { align-self: flex-end; }
+  .msg.user p { background: var(--user); border-bottom-right-radius: 4px; }
+  .msg.assistant p { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .msg.note p { background: none; color: var(--muted); font-size: .85rem; padding: 0 4px; }
+  .tool { margin-top: 6px; font-family: var(--font-mono); font-size: .72rem; color: var(--glow); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .tool:hover { border-color: var(--glow); }
+  .msg pre { margin: 6px 0 0; padding: 10px 12px; background: var(--surface-2); border-radius: 10px; font-family: var(--font-mono); font-size: .74rem; color: var(--muted); overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+
+  .dock { position: sticky; bottom: 0; background: linear-gradient(to top, var(--bg) 75%, transparent); padding: 16px 0 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .chips button { font: inherit; font-size: .85rem; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .chips button:hover { border-color: var(--glow); }
+  form { display: flex; gap: 8px; }
+  input[type="text"] { flex: 1; min-width: 0; font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 10px 16px; }
+  input[type="text"]:focus { outline: 2px solid var(--glow); outline-offset: 1px; }
+  .round { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font-size: 1.05rem; cursor: pointer; }
+  .round:hover { border-color: var(--glow); }
+  .round.primary { background: var(--glow); color: #04222d; border-color: var(--glow); }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: .82rem; color: var(--muted); }
+  .controls select { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+  .controls label { display: inline-flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <a href="/">‹ Dashboard</a>
+      <span class="badge">Simulated Alexa+ experience</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="stage">
+      <div class="orb" id="orb" data-state="idle" aria-hidden="true"></div>
+      <h1>Allswell</h1>
+      <p class="status" id="status">Ask about Mum's day. Tap the mic or type.</p>
+    </div>
+    <ol class="log" id="log" aria-live="polite"></ol>
+  </main>
+
+  <div class="dock">
+    <div class="wrap">
+      <div class="chips" id="chips">
+        <button type="button">How was Mum's day?</button>
+        <button type="button">Anything I should know?</button>
+        <button type="button">What happened this morning?</button>
+        <button type="button">Check in on Mum</button>
+        <button type="button">Show me the camera</button>
+      </div>
+      <form id="form">
+        <button class="round" id="mic" type="button" title="Speak" aria-label="Speak">🎤</button>
+        <input type="text" id="q" placeholder="Ask Allswell…" autocomplete="off" aria-label="Your question">
+        <button class="round primary" type="submit" title="Send" aria-label="Send">➤</button>
+      </form>
+      <div class="controls">
+        <label>Demo scenario <select id="scenario"></select></label>
+        <label><input type="checkbox" id="voice" checked> Speak replies</label>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/ask.js"></script>
+</body>
+</html>

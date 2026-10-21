@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Allswell</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap bar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <b>Allswell</b>
+          <span class="sub">Mum · lives alone · Pune</span>
+        </div>
+      </div>
+      <div class="bar-right">
+        <a class="ask-link" href="/ask">Ask on Alexa+ ›</a>
+        <div class="live" id="live">checking…</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Hero status: the whole product in one glance -->
+    <section class="status" id="statusCard">
+      <div class="status-eyebrow" id="statusEyebrow">Today</div>
+      <h1 id="statusHeadline">Checking in…</h1>
+      <p id="statusMessage" class="status-msg">Reading today's rhythm.</p>
+      <div class="status-foot">
+        <span class="src" id="digestSrc"></span>
+        <button class="checkin" id="checkinBtn" hidden>Check in on Mum</button>
+      </div>
+      <p class="checked" id="checkedNote" hidden></p>
+    </section>
+
+    <!-- Anomalies, if any -->
+    <section id="alertsSection" hidden>
+      <h2 class="sec-title">What needs a look</h2>
+      <div id="alerts" class="alerts"></div>
+    </section>
+
+    <!-- Today's rhythm timeline -->
+    <section>
+      <h2 class="sec-title">Today's rhythm</h2>
+      <p class="sec-note">Events only — never a video feed. This is everything Allswell looked at.</p>
+      <ol class="timeline" id="timeline"></ol>
+    </section>
+
+    <!-- Baseline + privacy -->
+    <section class="grid2">
+      <div class="panel">
+        <h3>What "normal" means</h3>
+        <p class="panel-note" id="baselineNote">—</p>
+      </div>
+      <div class="panel">
+        <h3>Privacy by design</h3>
+        <p class="panel-note">No camera feed, no video, ever. Allswell only sees event metadata: what kind of activity, which room, and when.</p>
+      </div>
+    </section>
+
+    <!-- Demo controls -->
+    <section class="demo">
+      <h2 class="sec-title">Demo controls</h2>
+      <p class="sec-note">Switch what "today" looks like. Scripted, so the demo is identical every run.</p>
+      <div class="scenarios" id="scenarios"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p>Allswell shows the caregiver insights, never footage. Reassurance, not surveillance.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
