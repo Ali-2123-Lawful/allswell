@@ -122,7 +122,6 @@
     refresh();
   });
 
-
   refresh();
   setInterval(refresh, 8000);
 })();

@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
 
-
 # Event types we understand: the common vocabulary of home sensors and smart
 # doorbells (motion / person / doorbell / delivery).
 EVENT_TYPES = ("motion", "person", "doorbell", "delivery")
@@ -34,6 +33,7 @@ class Event:
 
     @property
     def minutes_into_day(self) -> int:
+        """Minutes since local midnight: the unit every rhythm rule compares in."""
         return self.at.hour * 60 + self.at.minute
 
 
@@ -59,8 +59,8 @@ class Baseline:
     zones: dict = field(default_factory=dict)  # zone -> ZoneProfile
     days_observed: int = 0
     # quiet window = hours when the home is normally still (for off-hours checks)
-    quiet_start_minute: int = 0 * 60      # 00:00
-    quiet_end_minute: int = 5 * 60 + 30   # 05:30
+    quiet_start_minute: int = 0 * 60  # 00:00
+    quiet_end_minute: int = 5 * 60 + 30  # 05:30
     # a zone whose activity normally starts by this minute is a "morning" zone;
     # if it has no activity by the grace cutoff today, that's a missing-routine flag
     morning_expected_by_minute: int = 10 * 60  # 10:00
@@ -70,10 +70,10 @@ class Baseline:
 class Anomaly:
     """Something that broke the normal pattern."""
 
-    code: str          # machine code, e.g. "OFF_HOURS_ACTIVITY"
-    severity: str      # "info" | "warn" | "critical"
-    title: str         # short human label
-    detail: str        # one-line explanation grounded in the actual event
+    code: str  # machine code, e.g. "OFF_HOURS_ACTIVITY"
+    severity: str  # "info" | "warn" | "critical"
+    title: str  # short human label
+    detail: str  # one-line explanation grounded in the actual event
     zone: Optional[str] = None
     at: Optional[datetime] = None
 
@@ -89,6 +89,7 @@ class DayResult:
 
     @property
     def headline_severity(self) -> str:
+        """The most severe anomaly level today, or "ok" when all is well."""
         order = {"info": 0, "warn": 1, "critical": 2}
         if not self.anomalies:
             return "ok"

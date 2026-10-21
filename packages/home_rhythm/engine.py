@@ -15,7 +15,7 @@ digest layer (or a human) can say exactly what happened.
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Dict, Iterable, List, Optional
 
 from .model import Anomaly, Baseline, DayResult, Event, ZoneProfile
@@ -126,7 +126,11 @@ def evaluate_day(
         m = ev.minutes_into_day
         in_quiet = baseline.quiet_start_minute <= m < baseline.quiet_end_minute
         if in_quiet and ev.type in ("doorbell", "person", "motion"):
-            sev = "critical" if ev.zone == "front_door" or ev.type in ("doorbell", "person") else "warn"
+            sev = (
+                "critical"
+                if ev.zone == "front_door" or ev.type in ("doorbell", "person")
+                else "warn"
+            )
             anomalies.append(
                 Anomaly(
                     code="OFF_HOURS_ACTIVITY",
@@ -169,12 +173,13 @@ def evaluate_day(
 
     # --- Rule 4: repeated night activity ------------------------------------
     night = [
-        e for e in events
+        e
+        for e in events
         if baseline.quiet_start_minute <= e.minutes_into_day < baseline.quiet_end_minute
         and e.type == "motion"
     ]
     if len(night) >= night_activity_threshold:
-        zones = ", ".join(sorted({e.zone.replace('_', ' ') for e in night}))
+        zones = ", ".join(sorted({e.zone.replace("_", " ") for e in night}))
         anomalies.append(
             Anomaly(
                 code="REPEATED_NIGHT_ACTIVITY",
@@ -195,8 +200,7 @@ def evaluate_day(
     # at night) always survive; those genuinely need the caregiver's eyes.
     if any(a.code == "REPEATED_NIGHT_ACTIVITY" for a in anomalies):
         anomalies = [
-            a for a in anomalies
-            if not (a.code == "OFF_HOURS_ACTIVITY" and a.severity == "warn")
+            a for a in anomalies if not (a.code == "OFF_HOURS_ACTIVITY" and a.severity == "warn")
         ]
 
     # De-duplicate identical codes+zones (e.g. several off-hours motions in one zone

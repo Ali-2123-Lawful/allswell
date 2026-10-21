@@ -25,8 +25,14 @@ _PEOPLE = r"\b(mum|mom|mother|mummy|dad|father|papa|grandma|grandpa|gran|nan|nan
 _INTENTS = [
     ("privacy", r"\b(camera|video|footage|live ?view|live feed|watch (her|him|them))\b"),
     ("check_in", r"\b(check[ -]?in|call|reach out)\b"),
-    ("get_anomalies", r"\b(anything|should i know|worr\w*|wrong|alerts?|unusual|problems?|concern\w*)\b"),
-    ("get_rhythm_timeline", r"\b(timeline|what happened|what did|when did|events?|activity|this morning|so far)\b"),
+    (
+        "get_anomalies",
+        r"\b(anything|should i know|worr\w*|wrong|alerts?|unusual|problems?|concern\w*)\b",
+    ),
+    (
+        "get_rhythm_timeline",
+        r"\b(timeline|what happened|what did|when did|events?|activity|this morning|so far)\b",
+    ),
 ]
 
 _EVENT_WORDS = {
@@ -93,12 +99,17 @@ def phrase(tool: str, person: str, data: dict) -> str:
 
     if tool == "check_in":
         at = datetime.fromisoformat(data["checked_in_at"]).strftime("%I:%M %p").lstrip("0")
-        return f"Done. I've logged your check-in with {person} at {at}. I'll let you know if anything changes."
+        return (
+            f"Done. I've logged your check-in with {person} at {at}. "
+            "I'll let you know if anything changes."
+        )
 
     return json.dumps(data)
 
 
 async def ask(question: str, mcp_url: str) -> dict:
+    """Answer one caregiver question: pick a tool, call it over MCP, phrase the
+    result. Returns the reply plus the tool call, which the UI shows as proof."""
     intent, person = route(question)
     tool = "get_day_status" if intent == "privacy" else intent
     arguments = {"person": person}

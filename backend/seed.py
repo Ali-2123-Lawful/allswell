@@ -40,19 +40,19 @@ def _normal_day(day: datetime, n0: int) -> List[dict]:
     n = n0
     out = []
 
-    def add(typ, zone, h, m, sub=None):
+    def add(typ: str, zone: str, h: int, m: int, sub: str | None = None) -> None:
         nonlocal n
         out.append(_ev(n, typ, zone, day.replace(hour=h, minute=m, second=0, microsecond=0), sub))
         n += 1
 
-    add("motion", "kitchen", 7, 10)            # wakes, makes tea
+    add("motion", "kitchen", 7, 10)  # wakes, makes tea
     add("motion", "kitchen", 7, 35)
     add("motion", "living_room", 9, 5)
     add("person", "front_door", 11, 20, "human")  # steps out / mail
-    add("motion", "kitchen", 12, 40)           # lunch
+    add("motion", "kitchen", 12, 40)  # lunch
     add("motion", "living_room", 15, 0)
-    add("motion", "living_room", 18, 30)       # evening
-    add("motion", "kitchen", 19, 15)           # dinner
+    add("motion", "living_room", 18, 30)  # evening
+    add("motion", "kitchen", 19, 15)  # dinner
     add("motion", "living_room", 20, 45)
     return out
 
@@ -85,7 +85,7 @@ def today_events(scenario: str, today: datetime | None = None) -> List[dict]:
     n = 900  # high offset so ids don't clash with history
     out: List[dict] = []
 
-    def add(typ, zone, h, m, sub=None):
+    def add(typ: str, zone: str, h: int, m: int, sub: str | None = None) -> None:
         nonlocal n
         out.append(_ev(n, typ, zone, day.replace(hour=h, minute=m), sub))
         n += 1

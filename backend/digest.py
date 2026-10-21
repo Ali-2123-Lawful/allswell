@@ -95,8 +95,7 @@ def _bedrock_text(summary: dict) -> Optional[dict]:
             "State what happened and when. Do not speculate about causes."
         )
         prompt = (
-            f"{tone}\n\nFacts (JSON):\n{json.dumps(summary)}\n\n"
-            "Respond with only the sentence."
+            f"{tone}\n\nFacts (JSON):\n{json.dumps(summary)}\n\n" "Respond with only the sentence."
         )
 
         resp = client.messages.create(
@@ -112,12 +111,22 @@ def _bedrock_text(summary: dict) -> Optional[dict]:
             return None
 
         if summary["all_well"]:
-            return {"status": "ok", "headline": "All's well today", "message": text, "source": "bedrock"}
+            return {
+                "status": "ok",
+                "headline": "All's well today",
+                "message": text,
+                "source": "bedrock",
+            }
         top = max(
             summary["anomalies"],
             key=lambda a: {"info": 0, "warn": 1, "critical": 2}.get(a["severity"], 0),
         )
-        return {"status": top["severity"], "headline": top["title"], "message": text, "source": "bedrock"}
+        return {
+            "status": top["severity"],
+            "headline": top["title"],
+            "message": text,
+            "source": "bedrock",
+        }
     except Exception as exc:
         log.warning("Bedrock digest failed, using template: %s", exc)
         return None

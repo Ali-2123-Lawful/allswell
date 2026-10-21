@@ -15,6 +15,7 @@ Run:  uvicorn backend.main:app   (from the repo root)
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -47,7 +48,8 @@ mcp_app = mcp_server.streamable_http_app()
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Run the MCP session manager for as long as the app is up (Streamable HTTP needs it)."""
     async with mcp_server.session_manager.run():
         yield
 
@@ -56,7 +58,7 @@ app = FastAPI(title="Allswell", version="0.2.0", lifespan=lifespan)
 
 
 @app.get("/api/state")
-def api_state():
+def api_state() -> dict:
     """The one endpoint the dashboard polls: everything needed to render."""
     return {
         **care.snapshot(),
@@ -65,8 +67,9 @@ def api_state():
     }
 
 
-@app.post("/api/scenario/{scenario}")
-def api_scenario(scenario: str):
+@app.post("/api/scenario/{scenario}", response_model=None)
+def api_scenario(scenario: str) -> dict | JSONResponse:
+    """Switch the demo's "today" to one of the scripted scenarios."""
     if scenario not in seed.SCENARIOS:
         return JSONResponse({"error": "unknown scenario"}, status_code=400)
     care.load_scenario(scenario)
@@ -74,14 +77,14 @@ def api_scenario(scenario: str):
 
 
 @app.post("/api/check-in")
-def api_check_in():
+def api_check_in() -> dict:
     """Mock the one-tap check-in. In production this would place a call; here we
     just record that the caregiver reached out, no video ever involved."""
     return care.check_in()
 
 
-@app.post("/api/ask")
-async def api_ask(request: Request):
+@app.post("/api/ask", response_model=None)
+async def api_ask(request: Request) -> dict | JSONResponse:
     """Simulated Alexa+: answer a caregiver's question by calling our own MCP
     server over Streamable HTTP, exactly as a voice assistant would."""
     body = await request.json()
@@ -91,7 +94,10 @@ async def api_ask(request: Request):
     try:
         return await assistant.ask(question, mcp_url=f"{request.base_url}mcp")
     except Exception:
-        return {"reply": "Sorry, I couldn't reach Allswell just now. Please try again in a moment.", "tool": None}
+        return {
+            "reply": "Sorry, I couldn't reach Allswell just now. Please try again in a moment.",
+            "tool": None,
+        }
 
 
 # ------- static frontend ------- #
@@ -99,8 +105,9 @@ if FRONTEND.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND)), name="static")
 
 
-@app.get("/")
-def index():
+@app.get("/", response_model=None)
+def index() -> FileResponse | JSONResponse:
+    """Serve the caregiver dashboard."""
     idx = FRONTEND / "index.html"
     if idx.exists():
         return FileResponse(str(idx))
@@ -108,7 +115,8 @@ def index():
 
 
 @app.get("/ask")
-def ask_page():
+def ask_page() -> FileResponse:
+    """Serve the simulated Alexa+ experience."""
     return FileResponse(str(FRONTEND / "ask.html"))
 
 

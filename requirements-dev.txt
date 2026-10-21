@@ -1,0 +1,4 @@
+# Development tools (formatting + linting). Not needed to run the app.
+-r requirements.txt
+black==26.10.1
+ruff==0.17.1

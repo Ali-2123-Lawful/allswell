@@ -24,6 +24,7 @@ URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000/mcp"
 
 
 async def main() -> None:
+    """Open a session, list the tools, call each one and print the results."""
     sys.stdout.reconfigure(encoding="utf-8")  # Windows consoles default to cp1252
     async with streamable_http_client(URL) as (read, write, _):
         async with ClientSession(read, write) as session:
@@ -36,7 +37,9 @@ async def main() -> None:
             for name in ("get_day_status", "get_anomalies", "get_rhythm_timeline", "check_in"):
                 result = await session.call_tool(name, {"person": "Mum"})
                 body = result.structuredContent or result.content[0].text
-                print(f"\n{name} ->\n{json.dumps(body, indent=2) if isinstance(body, dict) else body}")
+                print(
+                    f"\n{name} ->\n{json.dumps(body, indent=2) if isinstance(body, dict) else body}"
+                )
 
 
 if __name__ == "__main__":

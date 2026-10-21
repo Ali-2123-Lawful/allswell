@@ -24,8 +24,8 @@ Typical use:
         print(a.severity, a.title, a.detail)
 """
 
-from .model import Event, Anomaly, Baseline, DayResult
 from .engine import build_baseline, evaluate_day
+from .model import Anomaly, Baseline, DayResult, Event
 
 __all__ = [
     "Event",

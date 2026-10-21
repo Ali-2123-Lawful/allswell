@@ -54,7 +54,9 @@ def get_anomalies(person: str = "Mum") -> dict:
     return care.get_anomalies(person)
 
 
-@server.tool(annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False, openWorldHint=False))
+@server.tool(
+    annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=False, openWorldHint=False)
+)
 def check_in(person: str = "Mum") -> dict:
     """Record that the caregiver reached out to the person (a mock call in this
     demo). Never starts a camera or video stream."""

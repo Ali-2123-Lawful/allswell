@@ -7,15 +7,15 @@ if [ ! -d ".venv" ]; then
   echo "Creating virtual environment..."
   python3 -m venv .venv
 fi
-# shellcheck disable=SC1091
-if [ -f .venv/Scripts/activate ]; then
-  source .venv/Scripts/activate   # Windows (Git Bash)
+# Call the venv's Python directly rather than relying on activation + PATH.
+if [ -f .venv/Scripts/python.exe ]; then
+  PY=.venv/Scripts/python.exe   # Windows (Git Bash)
 else
-  source .venv/bin/activate
+  PY=.venv/bin/python
 fi
 
 echo "Installing dependencies..."
-pip install -q -r requirements.txt
+"$PY" -m pip install -q -r requirements.txt
 
 echo "Starting Allswell at http://127.0.0.1:8000"
-exec uvicorn backend.main:app --host 127.0.0.1 --port 8000
+exec "$PY" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000

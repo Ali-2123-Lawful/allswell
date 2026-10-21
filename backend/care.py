@@ -14,14 +14,17 @@ from __future__ import annotations
 from datetime import datetime
 
 from packages.home_rhythm import build_baseline, evaluate_day
-from .digest import make_digest
+
 from . import events, seed
+from .digest import make_digest
 
 # Current demo scenario (what "today" looks like). Changeable live.
 _state = {"scenario": "normal", "checked_in_at": None}
 
 
 def load_scenario(scenario: str) -> None:
+    """Replace the event stream with a scripted scenario (a week of history plus
+    "today") and clear any earlier check-in."""
     events.load(seed.history_events(days=7) + seed.today_events(scenario))
     _state["scenario"] = scenario
     _state["checked_in_at"] = None
@@ -48,7 +51,13 @@ def snapshot() -> dict:
         "digest": make_digest(result, baseline),
         "is_all_well": result.is_all_well,
         "anomalies": [
-            {"code": a.code, "severity": a.severity, "title": a.title, "detail": a.detail, "zone": a.zone}
+            {
+                "code": a.code,
+                "severity": a.severity,
+                "title": a.title,
+                "detail": a.detail,
+                "zone": a.zone,
+            }
             for a in result.anomalies
         ],
         "timeline": [

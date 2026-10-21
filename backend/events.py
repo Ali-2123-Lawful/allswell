@@ -33,4 +33,5 @@ def load(raw_events: List[dict]) -> None:
 
 
 def all_events() -> List[Event]:
+    """A copy of the current stream, so callers can't mutate the store."""
     return list(_EVENTS)
