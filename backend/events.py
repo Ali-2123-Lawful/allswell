@@ -19,7 +19,12 @@ _EVENTS: List[Event] = []
 
 def load(raw_events: List[dict]) -> None:
     """Replace the whole stream with a timeline of raw event dicts."""
-    _EVENTS[:] = [
+    _EVENTS[:] = to_events(raw_events)
+
+
+def to_events(raw_events: List[dict]) -> List[Event]:
+    """Convert raw event dicts (as produced by seed.py) into engine Events."""
+    return [
         Event(
             id=ev["id"],
             type=ev["type"],

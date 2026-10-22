@@ -30,13 +30,8 @@ def load_scenario(scenario: str) -> None:
     _state["checked_in_at"] = None
 
 
-def snapshot() -> dict:
-    """Evaluate today against the learned rhythm: everything any surface needs."""
-    all_events = events.all_events()
-    if not all_events:
-        load_scenario(_state["scenario"])
-        all_events = events.all_events()
-
+def _assess(all_events: list) -> tuple:
+    """Split events into history and today, learn the baseline, judge today."""
     today = datetime.now().date()
     history = [e for e in all_events if e.at.date() < today]
     todays = [e for e in all_events if e.at.date() == today]
@@ -44,7 +39,27 @@ def snapshot() -> dict:
     baseline = build_baseline(history)
     # Evaluate as if it's early afternoon, so "missing morning" can fire in demos.
     now_ref = datetime.now().replace(hour=13, minute=0, second=0, microsecond=0)
-    result = evaluate_day(todays, baseline, now=now_ref)
+    return todays, baseline, evaluate_day(todays, baseline, now=now_ref), now_ref
+
+
+def warm_digests() -> None:
+    """Phrase every demo scenario's digest ahead of time, without touching the live
+    event store. Only worth it with a slow model backend (Amazon Bedrock): the
+    first view of each scenario is then instant instead of waiting on the model."""
+    for scenario in seed.SCENARIOS:
+        raw = seed.history_events(days=7) + seed.today_events(scenario)
+        _, baseline, result, _ = _assess(events.to_events(raw))
+        make_digest(result, baseline)
+
+
+def snapshot() -> dict:
+    """Evaluate today against the learned rhythm: everything any surface needs."""
+    all_events = events.all_events()
+    if not all_events:
+        load_scenario(_state["scenario"])
+        all_events = events.all_events()
+
+    todays, baseline, result, now_ref = _assess(all_events)
 
     return {
         "scenario": _state["scenario"],

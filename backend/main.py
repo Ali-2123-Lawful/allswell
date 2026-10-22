@@ -15,6 +15,7 @@ Run:  uvicorn backend.main:app   (from the repo root)
 from __future__ import annotations
 
 import os
+import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -49,7 +50,10 @@ mcp_app = mcp_server.streamable_http_app()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Run the MCP session manager for as long as the app is up (Streamable HTTP needs it)."""
+    """Run the MCP session manager for as long as the app is up (Streamable HTTP needs it).
+    With Bedrock on, also pre-phrase the demo digests in the background."""
+    if os.getenv("ALLSWELL_USE_BEDROCK", "0") == "1":
+        threading.Thread(target=care.warm_digests, daemon=True).start()
     async with mcp_server.session_manager.run():
         yield
 

@@ -76,14 +76,14 @@ def _bedrock_text(summary: dict) -> Optional[dict]:
     """Step 2 (optional): ask Bedrock to phrase it. Returns None on any failure
     so the caller can fall back cleanly."""
     try:
-        # Imported lazily so the app runs without the AWS extras installed.
-        # Signs requests with the standard AWS credential chain (env vars,
-        # ~/.aws/credentials, SSO profile, ...).
-        from anthropic import AnthropicBedrockMantle
+        # Imported lazily so the app runs without boto3 installed. boto3 picks up a
+        # Bedrock API key (AWS_BEARER_TOKEN_BEDROCK) or the standard AWS credential
+        # chain (env vars, ~/.aws/credentials, SSO profile, ...).
+        import boto3
 
         region = os.getenv("AWS_REGION", "us-east-1")
-        model_id = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-haiku-5-5")
-        client = AnthropicBedrockMantle(aws_region=region)
+        model_id = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20250929-v1:0")
+        client = boto3.client("bedrock-runtime", region_name=region)
 
         tone = (
             "Write a single calm, reassuring sentence for a family caregiver "
@@ -95,18 +95,22 @@ def _bedrock_text(summary: dict) -> Optional[dict]:
             "State what happened and when. Do not speculate about causes."
         )
         prompt = (
-            f"{tone}\n\nFacts (JSON):\n{json.dumps(summary)}\n\n" "Respond with only the sentence."
+            f'{tone} Refer to the person as "Mum".\n\nFacts (JSON):\n{json.dumps(summary)}\n\n'
+            "Respond with only the sentence."
         )
 
-        resp = client.messages.create(
-            model=model_id,
-            max_tokens=1024,
-            output_config={"effort": "low"},  # one plain sentence; little thinking needed
-            messages=[{"role": "user", "content": prompt}],
-        )
-        if resp.stop_reason == "refusal":
+        body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 300,
+            "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}],
+        }
+        resp = client.invoke_model(modelId=model_id, body=json.dumps(body))
+        payload = json.loads(resp["body"].read())
+        if payload.get("stop_reason") == "refusal":
             return None
-        text = "".join(b.text for b in resp.content if b.type == "text").strip()
+        text = "".join(
+            b.get("text", "") for b in payload.get("content", []) if b.get("type") == "text"
+        ).strip()
         if not text:
             return None
 

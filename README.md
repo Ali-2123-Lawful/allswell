@@ -132,9 +132,9 @@ tell the assistant to answer only from tool results and never speculate.
   the dependency-free rhythm engine published as its own MIT-licensed library
   with unit tests and CI, so any home-sensor project can reuse it. Allswell
   vendors the same code in `packages/home_rhythm/`.
-- **AWS Builder mini-challenge:** not entered. An optional Amazon Bedrock
-  phrasing backend exists in `backend/digest.py` but is off by default and is
-  not used in the demo.
+- **AWS Builder mini-challenge:** Amazon Bedrock writes the caregiver's daily
+  digest from the engine's facts (see
+  [Amazon Bedrock integration](#amazon-bedrock-integration-aws-builder) below).
 
 ---
 
@@ -172,13 +172,32 @@ activity for someone living alone plus "today" for each scenario. The engine
 doesn't care about the source: in production the same events could come from
 smart doorbells, motion sensors or any home-sensor hub.
 
-### Optional: Amazon Bedrock phrasing
+### Amazon Bedrock integration (AWS Builder)
 
-By default a zero-cost template writes the digest. Setting
-`ALLSWELL_USE_BEDROCK=1` (see `.env.example`) and installing
-`pip install "anthropic[bedrock]"` makes `backend/digest.py` ask a small Bedrock
-model (Claude Haiku 5.5) to reword the engine's facts, falling back to the
-template on any error. This path is not used in the demo.
+The rhythm engine decides *what* happened; Amazon Bedrock decides *how to say
+it* to a worried family member. The pipeline:
+
+1. **Facts.** `home_rhythm` evaluates today and `backend/digest.py`
+   (`_structured_summary`) compresses the result into a small JSON fact sheet:
+   all-well or not, active rooms, days of history, each anomaly with its time.
+2. **Phrasing.** `_bedrock_text` sends that fact sheet to Claude on Amazon
+   Bedrock (`boto3` `bedrock-runtime` `InvokeModel`, Claude Sonnet 4.5 through the
+   US cross-region inference profile) with instructions to write one calm
+   sentence using only the given facts and never speculate about causes.
+3. **Safety net.** Any error, refusal or empty reply falls back to the
+   zero-cost template, so the caregiver always gets an answer.
+4. **Cost control.** Results are cached per distinct day-state (`make_digest`),
+   and with Bedrock on the server pre-phrases each demo scenario in the
+   background at startup (`care.warm_digests`, started from `lifespan` in
+   `backend/main.py`), so the dashboard's polling never triggers repeat calls.
+5. **Everywhere at once.** The same digest appears on the dashboard (captioned
+   "written by Amazon Bedrock"), in the MCP tool `get_day_status`, and in the
+   simulated Alexa+ replies.
+
+To enable it, `pip install boto3`, then set in `.env` (see `.env.example`):
+`ALLSWELL_USE_BEDROCK=1`, `AWS_REGION`, `BEDROCK_MODEL_ID`, and either a Bedrock
+API key (`AWS_BEARER_TOKEN_BEDROCK`) or standard AWS credentials. Without it,
+everything still runs on the template.
 
 ---
 

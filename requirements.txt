@@ -3,5 +3,5 @@ uvicorn[standard]==0.32.1
 httpx==0.27.2
 # Official MCP Python SDK; 1.30.x speaks MCP spec 2025-11-25 (Streamable HTTP).
 mcp==1.30.0
-# Optional, only if you set ALLSWELL_USE_BEDROCK=1 (not used in the demo):
-# anthropic[bedrock]
+# Optional, only if you set ALLSWELL_USE_BEDROCK=1 (Amazon Bedrock digests):
+# boto3==1.43.117
