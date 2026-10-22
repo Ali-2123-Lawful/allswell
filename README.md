@@ -128,8 +128,10 @@ tell the assistant to answer only from tool results and never speculate.
 ## Hackathon entry
 
 - **Track:** Alexa+ (care-taking), Build, Ship, Shape: Amazon Developer Hackathon.
-- **Open Source mini-challenge:** `packages/home_rhythm/`, a dependency-free
-  rhythm engine any home-sensor project can reuse (see below).
+- **Open Source mini-challenge:** [home-rhythm](https://github.com/Ali-2123-Lawful/home-rhythm),
+  the dependency-free rhythm engine published as its own MIT-licensed library
+  with unit tests and CI, so any home-sensor project can reuse it. Allswell
+  vendors the same code in `packages/home_rhythm/`.
 - **AWS Builder mini-challenge:** not entered. An optional Amazon Bedrock
   phrasing backend exists in `backend/digest.py` but is off by default and is
   not used in the demo.
@@ -148,8 +150,11 @@ tell the assistant to answer only from tool results and never speculate.
 | `REPEATED_NIGHT_ACTIVITY` | repeated night-time movement above a threshold | warn |
 
 No ML, just rolling statistics and explainable rules, so every alert carries the
-real event time and room. To reuse it, copy `packages/home_rhythm/` into any
-project with timestamped home-sensor events:
+real event time and room. It is published separately as
+[home-rhythm](https://github.com/Ali-2123-Lawful/home-rhythm)
+(`pip install git+https://github.com/Ali-2123-Lawful/home-rhythm.git`), or you
+can copy `packages/home_rhythm/` into any project with timestamped home-sensor
+events:
 
 ```python
 from home_rhythm import Event, build_baseline, evaluate_day
