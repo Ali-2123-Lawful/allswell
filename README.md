@@ -123,6 +123,12 @@ integration) and a simulated Alexa+ experience that calls it at runtime.
 Read-only tools carry `readOnlyHint` annotations, and the server instructions
 tell the assistant to answer only from tool results and never speculate.
 
+The simulated Alexa+ keeps **conversation state** per browser session
+(`backend/assistant.py`): who the caregiver is asking about, and any offer
+waiting for an answer. So when Allswell reports something unusual it offers to
+check in, a plain *"Yes"* calls `check_in` and *"Not now"* declines, and
+follow-up questions stay about the same person without naming them again.
+
 ---
 
 ## Hackathon entry
@@ -165,12 +171,35 @@ for a in result.anomalies:
     print(a.severity, a.title, a.detail)
 ```
 
-### Where the events come from
+### From demo to real life
 
-For the demo, a simulator (`backend/seed.py`) generates a believable week of
-activity for someone living alone plus "today" for each scenario. The engine
-doesn't care about the source: in production the same events could come from
-smart doorbells, motion sensors or any home-sensor hub.
+**In this demo the home events are simulated.** `backend/seed.py` generates a
+believable week of activity for someone living alone, plus "today" for each
+scenario, so every run is identical. Everything after that (the rhythm engine,
+the MCP server, Bedrock phrasing, the Alexa+ conversation) is the real code
+path. Going live means swapping the event source, nothing else.
+
+In a real home, the events would come from a few off-the-shelf, camera-free
+sensors connected to a smart-home hub:
+
+| Sensor | What it reports | Why it matters |
+|---|---|---|
+| Motion sensors (kitchen, living room, bedroom) | movement in a room | the backbone of the daily rhythm |
+| Door sensor (front door) | door opened or closed | visitors, going out, a door at 3 AM |
+| Door sensor (fridge) | fridge opened | a good sign that a meal happened |
+| Smart plug on the kettle | appliance switched on | the morning-tea routine |
+| Smart doorbell (optional) | ring, visitor, parcel | the unretrieved-delivery alert, events only |
+
+A starter kit like this costs roughly ₹7,000–12,000 one-time at typical Indian
+retail prices, needs no subscription, and runs for a year or more on coin-cell
+batteries. Allswell would learn the normal day over the first week or two, then
+check "today so far" against it every few minutes and speak up only when the
+rhythm breaks.
+
+**Consent comes first.** The person being cared for agrees to the sensors.
+That's much easier to ask for when the answer to "will you be watching me?" is
+an honest no: no camera, no microphone, no video, only *what*, *where* and
+*when*.
 
 ### Amazon Bedrock integration (AWS Builder)
 

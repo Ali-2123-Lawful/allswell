@@ -15,6 +15,15 @@
     status.textContent = STATUS[state];
   }
 
+  // One conversation per browser tab, so follow-ups ("Yes", "Anything else?")
+  // reach the same server-side context.
+  let sessionId = null;
+  try { sessionId = sessionStorage.getItem("allswell-session"); } catch (e) { /* storage blocked */ }
+  if (!sessionId) {
+    sessionId = window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
+    try { sessionStorage.setItem("allswell-session", sessionId); } catch (e) { /* storage blocked */ }
+  }
+
   function addMsg(role, text, call) {
     const li = document.createElement("li");
     li.className = "msg " + role;
@@ -31,6 +40,20 @@
       pre.textContent = JSON.stringify(call.result, null, 2);
       btn.addEventListener("click", () => { pre.hidden = !pre.hidden; });
       li.append(btn, pre);
+    }
+    if (call && call.offer === "check_in") {
+      // Quick replies for the offer; saying or typing "Yes" works just as well.
+      const quick = document.createElement("div");
+      quick.className = "quick";
+      [["Yes, check in", "Yes"], ["Not now", "No"]].forEach(([label, answer], i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = label;
+        if (i === 0) b.className = "yes";
+        b.addEventListener("click", () => ask(answer));
+        quick.appendChild(b);
+      });
+      li.appendChild(quick);
     }
     log.appendChild(li);
     li.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -69,6 +92,7 @@
   async function ask(question) {
     question = question.trim();
     if (!question || busy) return;
+    document.querySelectorAll(".quick").forEach((q) => q.remove()); // an answered offer goes away
     addMsg("user", question);
     input.value = "";
     setState("thinking");
@@ -78,7 +102,7 @@
       const r = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, session: sessionId }),
       });
       const d = await r.json();
       typing.remove();

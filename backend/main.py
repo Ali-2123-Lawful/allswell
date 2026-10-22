@@ -96,7 +96,10 @@ async def api_ask(request: Request) -> dict | JSONResponse:
     if not question:
         return JSONResponse({"error": "empty question"}, status_code=400)
     try:
-        return await assistant.ask(question, mcp_url=f"{request.base_url}mcp")
+        session_id = str(body.get("session") or "default")[:64]
+        return await assistant.ask(
+            question, mcp_url=f"{request.base_url}mcp", session_id=session_id
+        )
     except Exception:
         return {
             "reply": "Sorry, I couldn't reach Allswell just now. Please try again in a moment.",

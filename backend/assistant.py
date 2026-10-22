@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import OrderedDict
 from datetime import datetime
 
 from mcp import ClientSession
@@ -35,6 +36,16 @@ _INTENTS = [
     ),
 ]
 
+# Short answers to an offer ("Would you like me to check in on Mum?").
+_AFFIRM = r"^(yes|yeah|yep|yup|sure|ok|okay|please|go ahead|do it)\b"
+_DECLINE = r"^(no|nope|not now|no thanks|don'?t)\b"
+
+# Conversation state per browser session: who the caregiver is asking about and
+# any offer awaiting a yes/no. This is what lets follow-ups like "Yes" or
+# "Anything I should know?" carry over from the previous turn.
+_sessions: OrderedDict[str, dict] = OrderedDict()
+_MAX_SESSIONS = 200
+
 _EVENT_WORDS = {
     "motion": "movement",
     "person": "someone",
@@ -49,11 +60,21 @@ def _event_phrase(e: dict) -> str:
     return f"{_EVENT_WORDS.get(e['type'], e['type'])} {prep} the {zone} at {e['time_label']}"
 
 
-def route(question: str) -> tuple[str, str]:
-    """Pick (intent, person) for a question. Defaults to the day status."""
+def _session(session_id: str) -> dict:
+    """The conversation state for one browser session (oldest evicted first)."""
+    state = _sessions.pop(session_id, None) or {"person": "Mum", "pending": None}
+    _sessions[session_id] = state
+    while len(_sessions) > _MAX_SESSIONS:
+        _sessions.popitem(last=False)
+    return state
+
+
+def route(question: str, default_person: str = "Mum") -> tuple[str, str]:
+    """Pick (intent, person) for a question. Defaults to the day status, and to
+    the person from earlier in the conversation when none is named."""
     q = question.lower()
     m = re.search(_PEOPLE, q)
-    person = m.group(1).capitalize() if m else "Mum"
+    person = m.group(1).capitalize() if m else default_person
     for intent, pattern in _INTENTS:
         if re.search(pattern, q):
             return intent, person
@@ -85,9 +106,10 @@ def phrase(tool: str, person: str, data: dict) -> str:
         items = data["anomalies"]
         if not items:
             return f"Nothing unusual today. {person}'s day is following the normal rhythm."
+        offer = f" Would you like me to check in on {person}?"
         if len(items) == 1:
-            return f"One thing stands out. {items[0]['detail']}"
-        return f"{len(items)} things stand out. " + " ".join(a["detail"] for a in items)
+            return f"One thing stands out. {items[0]['detail']}" + offer
+        return f"{len(items)} things stand out. " + " ".join(a["detail"] for a in items) + offer
 
     if tool == "get_rhythm_timeline":
         events = data["events"]
@@ -107,10 +129,33 @@ def phrase(tool: str, person: str, data: dict) -> str:
     return json.dumps(data)
 
 
-async def ask(question: str, mcp_url: str) -> dict:
+def _needs_a_look(tool: str, data: dict) -> bool:
+    """Whether this result is worth offering a check-in for."""
+    if tool == "get_day_status":
+        return not data["is_all_well"]
+    return tool == "get_anomalies" and bool(data["anomalies"])
+
+
+async def ask(question: str, mcp_url: str, session_id: str = "default") -> dict:
     """Answer one caregiver question: pick a tool, call it over MCP, phrase the
-    result. Returns the reply plus the tool call, which the UI shows as proof."""
-    intent, person = route(question)
+    result. Returns the reply plus the tool call, which the UI shows as proof,
+    and any offer ("check_in") the caregiver can accept with a plain "Yes"."""
+    state = _session(session_id)
+    q = question.strip().lower()
+    short_answer = len(q.split()) <= 5
+
+    if state["pending"] == "check_in" and short_answer and re.search(_DECLINE, q):
+        state["pending"] = None
+        return {
+            "reply": "Okay. I'll keep watching the rhythm and tell you if anything else changes.",
+            "tool": None,
+            "offer": None,
+        }
+    if state["pending"] == "check_in" and short_answer and re.search(_AFFIRM, q):
+        intent, person = "check_in", state["person"]
+    else:
+        intent, person = route(question, state["person"])
+
     tool = "get_day_status" if intent == "privacy" else intent
     arguments = {"person": person}
     data = await call_tool(mcp_url, tool, arguments)
@@ -120,4 +165,7 @@ async def ask(question: str, mcp_url: str) -> dict:
             "I can't show video. Allswell never uses a camera feed, only activity "
             "insights. Here's what I can tell you. " + reply
         )
-    return {"reply": reply, "tool": tool, "arguments": arguments, "result": data}
+
+    offer = "check_in" if _needs_a_look(tool, data) else None
+    state.update(person=person, pending=offer)
+    return {"reply": reply, "tool": tool, "arguments": arguments, "result": data, "offer": offer}
